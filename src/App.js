@@ -1,10 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './App.css';
-const accessKey = process.env.REACT_APP_API_KEY;
+
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import InfiniteScroll from 'react-infinite-scroll-component';
+
+const apiKey = process.env.REACT_APP_API_KEY;
+
+if (!apiKey) {
+  toast.error('Get Your Api Key!');
+}
 
 export default function App() {
+  useEffect(() => {
+    document.title = 'Cool Cats';
+  }, []);
+
   const [images, setImages] = useState([]);
+
   useEffect(() => {
     getPhotos();
   }, []);
@@ -16,32 +30,43 @@ export default function App() {
         url: 'https://api.thecatapi.com/v1/images/search',
         headers: {
           'content-type': 'application/json',
-          'x-api-key': accessKey,
+          'x-api-key': apiKey,
         },
         params: {
-          limit: '20',
+          limit: '10',
           size: 'med',
           order: 'RANDOM',
         },
       });
-      setImages(res.data);
+      setImages((images) => [...images, ...res.data]);
     } catch (err) {
-      console.log(err);
+      toast.error('something went wrong');
     }
   };
+
   return (
-    <div className="image-grid">
-      {images.map((image, idx) => (
-        <a
-          className="image"
-          key={idx}
-          href={image.url}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src={image.url} alt={image.url} />
-        </a>
-      ))}
-    </div>
+    <>
+      <InfiniteScroll
+        dataLength={images.length}
+        next={getPhotos}
+        hasMore={true}
+        loader={<h4>Loading...</h4>}
+      >
+        <div className="image-grid">
+          <ToastContainer autoClose={3000} position="top-center" />
+          {images.map((image, idx) => (
+            <a
+              className="image"
+              key={idx}
+              href={image.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img src={image.url} alt={image.url} />
+            </a>
+          ))}
+        </div>
+      </InfiniteScroll>
+    </>
   );
 }
